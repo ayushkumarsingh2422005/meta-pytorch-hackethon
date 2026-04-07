@@ -150,4 +150,6 @@ def episode_score(trajectory: Iterable[TrajectoryStep]) -> float:
 
     # Fixed convex combination (deterministic)
     score = 0.45 * correct + 0.30 * min(1.0, reasoning_mean) + 0.25 * fraud_score
-    return max(0.0, min(1.0, round(score, 4)))
+    # fix: change the range from [0.0,1.0] to [0,1]
+    epsilon = 1e-6
+    return max(epsilon, min(1.0 - epsilon, round(score, 4)))
