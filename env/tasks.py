@@ -48,15 +48,22 @@ HARD_EXPENSES: list[ExpenseRecord] = [
 ]
 
 
-TASK_EXPENSES: dict[str, list[ExpenseRecord]] = {
-    "easy": EASY_EXPENSES,
-    "medium": MEDIUM_EXPENSES,
-    "hard": HARD_EXPENSES,
-}
+# TASK_EXPENSES: dict[str, list[ExpenseRecord]] = {
+#     "easy": EASY_EXPENSES,
+#     "medium": MEDIUM_EXPENSES,
+#     "hard": HARD_EXPENSES,
+# }
 
+TASKS = {
+    "fraud_easy": EASY_EXPENSES,
+    "fraud_medium": MEDIUM_EXPENSES,
+    "fraud_hard": HARD_EXPENSES,
+}
 
 def get_task_expenses(task: str) -> list[ExpenseRecord]:
     key = task.lower().strip()
-    if key not in TASK_EXPENSES:
-        raise ValueError(f"Unknown task {task!r}; expected one of {sorted(TASK_EXPENSES)}")
-    return list(TASK_EXPENSES[key])
+    if key not in TASKS:
+        raise ValueError(
+            f"Unknown task {task!r}; expected one of {sorted(TASKS)}"
+        )
+    return list(TASKS[key])
