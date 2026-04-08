@@ -69,6 +69,30 @@ def test_easy_episode_high_score(monkeypatch: pytest.MonkeyPatch) -> None:
     assert obs.episode_score >= 0.85
 
 
+def test_root_graders_module_registry() -> None:
+    import graders as root_graders
+
+    assert len(root_graders.PRIMARY_GRADER_TASK_IDS) == 3
+    for tid in root_graders.PRIMARY_GRADER_TASK_IDS:
+        assert tid in root_graders.GRADERS
+        s = root_graders.GRADERS[tid]()
+        assert 0.0 < s < 1.0
+
+
+def test_tasks_http_endpoint_lists_graders() -> None:
+    from fastapi.testclient import TestClient
+
+    from server.app import app
+
+    client = TestClient(app)
+    r = client.get("/tasks")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["count"] >= 3
+    assert data["tasks_with_graders"] >= 3
+    assert all(t.get("has_grader") for t in data["tasks"][:3])
+
+
 def test_hackathon_score_strict_open_interval() -> None:
     """Phase-2: scores must be strictly inside (0, 1), not 0.0 or 1.0."""
     for fn in (grade_task_easy, grade_task_medium, grade_task_hard):

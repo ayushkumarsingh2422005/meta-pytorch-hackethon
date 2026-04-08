@@ -27,7 +27,7 @@ where = ["."]
 include = ["env*", "server*"]
 
 [tool.setuptools]
-py-modules = ["models", "client"]
+py-modules = ["models", "client", "graders"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

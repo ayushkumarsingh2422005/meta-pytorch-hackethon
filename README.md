@@ -56,7 +56,7 @@ The server implements the full **OpenEnv HTTP protocol** (FastAPI + uvicorn), so
                          ▼
 ┌──────────────────────────────────────────────────────┐
 │               server/app.py  (FastAPI)               │
-│  POST /reset   POST /step   GET /state   GET /health │
+│  POST /reset   POST /step   GET /state   GET /health   GET /tasks │
 └────────────────────────┬─────────────────────────────┘
                          │
               ┌──────────▼──────────┐
@@ -89,7 +89,8 @@ The server implements the full **OpenEnv HTTP protocol** (FastAPI + uvicorn), so
 ├── models.py           # Root re-export of env.models (used by OpenEnv tooling)
 ├── client.py           # Async WebSocket client (CorporateExpenseEnv)
 ├── inference.py        # LLM agent entry point
-├── openenv.yaml        # Manifest: ≥3 tasks, grader hooks, reward bounds (0.01–0.99)
+├── openenv.yaml        # Manifest: top-level ``graders:`` + ≥3 tasks with string entrypoints
+├── graders.py          # Root grader module (``graders:grade_task_*`` for validators)
 ├── Dockerfile          # Container for local runs & HF Spaces
 ├── pyproject.toml      # Build system + dependencies
 └── uv.lock             # Reproducible lock file (uv)
