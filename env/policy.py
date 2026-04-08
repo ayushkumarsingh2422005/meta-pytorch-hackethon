@@ -21,6 +21,16 @@ def _norm_desc(s: str) -> str:
     return " ".join(s.lower().strip().split())
 
 
+def policy_tier(task: str) -> str:
+    """Map task id (easy / fraud_easy / …) to policy band used in rules."""
+    t = task.lower().strip()
+    if t in ("medium", "fraud_medium"):
+        return "medium"
+    if t in ("hard", "fraud_hard"):
+        return "hard"
+    return "easy"
+
+
 def ground_truth_for_expense(
     expense: ExpenseRecord,
     *,
@@ -62,13 +72,14 @@ def ground_truth_for_expense(
             flags.append("category_high_value_no_receipt")
             return GroundTruth(decision="reject", fraud_flags=tuple(flags))
 
-    # Task-specific tightening
-    if task == "medium":
+    # Task-specific tightening (supports easy + fraud_* aliases via policy_tier)
+    tier = policy_tier(task)
+    if tier == "medium":
         if not expense.receipt_provided and expense.amount >= 40.0:
             flags.append("medium_tier_receipt_required")
             return GroundTruth(decision="reject", fraud_flags=tuple(flags))
 
-    if task == "hard":
+    if tier == "hard":
         if expense.amount >= 500.0 and "client" in nd and not expense.receipt_provided:
             flags.append("client_entertainment_no_receipt")
             return GroundTruth(decision="reject", fraud_flags=tuple(flags))

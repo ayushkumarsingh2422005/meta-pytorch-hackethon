@@ -19,7 +19,7 @@ from env.models import (
     TrajectoryStep,
 )
 from env.policy import ground_truth_for_expense
-from env.tasks import get_task_expenses
+from env.tasks import TASK_EXPENSES, get_task_expenses
 
 
 class CorporateExpenseEnvironment(
@@ -59,8 +59,16 @@ class CorporateExpenseEnvironment(
         try:
             self._expenses = get_task_expenses(self._task)
         except ValueError:
-            self._task = "easy"
-            self._expenses = get_task_expenses("easy")
+            # Prefer short default, then fraud_* default (must exist in TASK_EXPENSES)
+            for fallback in ("easy", "fraud_easy", "medium", "fraud_medium"):
+                if fallback in TASK_EXPENSES:
+                    self._task = fallback
+                    self._expenses = get_task_expenses(fallback)
+                    break
+            else:
+                first = sorted(TASK_EXPENSES.keys())[0]
+                self._task = first
+                self._expenses = get_task_expenses(first)
 
         return self._build_observation(
             done=False, reward=0.0, err=None, ep_score=None, reward_detail=None

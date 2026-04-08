@@ -197,6 +197,8 @@ python inference.py
 
 Select via `reset(task="hard")` or the `CORPORATE_EXPENSE_TASK` env var.
 
+**Aliases:** `fraud_easy`, `fraud_medium`, and `fraud_hard` use the same expense batches as `easy`, `medium`, and `hard` (for Hugging Face / legacy configs). The validator’s `POST /reset` with `{}` uses the default task (`easy` unless you set `CORPORATE_EXPENSE_TASK` on the Space).
+
 ---
 
 ### Action Space — `CorporateExpenseAction`

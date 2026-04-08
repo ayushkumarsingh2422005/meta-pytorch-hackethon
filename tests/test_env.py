@@ -10,7 +10,19 @@ from env.env import CorporateExpenseEnvironment  # noqa: E402
 from env.grader import episode_score  # noqa: E402
 from env.models import CorporateExpenseAction, TrajectoryStep  # noqa: E402
 from env.policy import ground_truth_for_expense  # noqa: E402
-from env.tasks import HARD_EXPENSES, MEDIUM_EXPENSES  # noqa: E402
+from env.policy import policy_tier  # noqa: E402
+from env.tasks import HARD_EXPENSES, MEDIUM_EXPENSES, get_task_expenses  # noqa: E402
+
+
+def test_fraud_task_aliases_match_short_names() -> None:
+    assert get_task_expenses("fraud_easy") == get_task_expenses("easy")
+    assert get_task_expenses("fraud_hard") == get_task_expenses("hard")
+
+
+def test_policy_tier_normalizes_fraud_prefix() -> None:
+    assert policy_tier("fraud_medium") == "medium"
+    assert policy_tier("fraud_hard") == "hard"
+    assert policy_tier("easy") == "easy"
 
 
 def test_ground_truth_duplicate_hard() -> None:
