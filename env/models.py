@@ -51,7 +51,12 @@ class ExpenseStepReward(BaseModel):
 
     model_config = {"extra": "forbid"}
 
-    total: float = Field(..., ge=0.0, le=1.0, description="Clamped step reward")
+    total: float = Field(
+        ...,
+        ge=0.01,
+        le=0.99,
+        description="Step reward mapped to open interval (0.01, 0.99)",
+    )
     breakdown: StepRewardBreakdown = Field(
         default_factory=StepRewardBreakdown,
         description="Additive components before clamping",
@@ -73,7 +78,7 @@ class CorporateExpenseObservation(Observation):
     task: str = Field(default="easy", description="Task difficulty key")
     episode_score: Optional[float] = Field(
         default=None,
-        description="Deterministic [0,1] episode score when done is true",
+        description="Deterministic episode score when done; strictly in (0,1), typically [0.01,0.99]",
     )
     last_action_error: Optional[str] = Field(
         default=None,

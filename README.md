@@ -39,7 +39,7 @@ Finance teams route thousands of expense claims through policy checks and fraud 
 - An LLM agent receives a batch of `ExpenseRecord` objects one at a time
 - For each expense it must output a JSON `{"decision": "approve"|"reject", "reason": "..."}` 
 - A **deterministic grader** scores every decision based on correctness, reasoning quality, and fraud-detection skill
-- At the end of the episode an aggregate `episode_score` in **[0, 1]** is emitted
+- At the end of the episode an aggregate `episode_score` is emitted in **(0, 1)** — values are mapped to **[0.01, 0.99]** so they are never exactly `0.0` or `1.0` (Meta hackathon Phase-2 requirement)
 
 The server implements the full **OpenEnv HTTP protocol** (FastAPI + uvicorn), so any OpenEnv-compatible agent can connect to it locally, via Docker, or as a live **Hugging Face Space**.
 
@@ -89,7 +89,7 @@ The server implements the full **OpenEnv HTTP protocol** (FastAPI + uvicorn), so
 ├── models.py           # Root re-export of env.models (used by OpenEnv tooling)
 ├── client.py           # Async WebSocket client (CorporateExpenseEnv)
 ├── inference.py        # LLM agent entry point
-├── openenv.yaml        # OpenEnv manifest
+├── openenv.yaml        # Manifest: ≥3 tasks, grader hooks, reward bounds (0.01–0.99)
 ├── Dockerfile          # Container for local runs & HF Spaces
 ├── pyproject.toml      # Build system + dependencies
 └── uv.lock             # Reproducible lock file (uv)
@@ -249,8 +249,8 @@ Select via `reset(task="hard")` or the `CORPORATE_EXPENSE_TASK` env var.
 | `current_expense_index` | 0-based index of the expense to act on next |
 | `task` | Active task difficulty |
 | `done` | `true` when all expenses have been processed |
-| `reward` | Per-step reward in **[0, 1]** |
-| `episode_score` | Final aggregate score in **[0, 1]** (only when `done=true`) |
+| `reward` | Per-step reward in **[0.01, 0.99]** (strict subset of (0, 1)) |
+| `episode_score` | Final aggregate in **[0.01, 0.99]** when `done=true` |
 | `last_action_error` | Server-side validation message, if any |
 | `step_reward_detail` | Typed breakdown (`ExpenseStepReward`) |
 
@@ -547,7 +547,9 @@ All three must pass before submitting to the hackathon.
 
 ## 📊 Reward System Deep Dive
 
-### Per-Step Reward (clamped to [0, 1])
+### Per-Step Reward (mapped to [0.01, 0.99])
+
+Internally, components sum in [0, 1]; the server then maps linearly to **[0.01, 0.99]**.
 
 | Component | Value | Condition |
 |-----------|-------|-----------|
@@ -557,7 +559,7 @@ All three must pass before submitting to the hackathon.
 | **Fraud detection** | +0.00 to +0.20 | Correct rejection + fraud keywords mentioned |
 | **Risky approval** | −0.20 | Approved a claim that should be rejected **and** has fraud flags |
 
-### Episode Score (deterministic aggregate in [0, 1])
+### Episode Score (deterministic; mapped to [0.01, 0.99])
 
 ```
 score = 0.45 × correctness
@@ -573,7 +575,7 @@ score = 0.45 × correctness
 
 | Agent | Easy | Medium | Hard |
 |-------|------|--------|------|
-| **Oracle (ground-truth)** | 1.00 | 1.00 | 1.00 |
+| **Oracle (ground-truth)** | ~0.99 | ~0.99 | ~0.99 |
 | Always-approve | ~0.30 | ~0.20 | ~0.15 |
 | Random | ~0.35 | ~0.35 | ~0.30 |
 | **LLM baseline (Qwen 72B)** | ~0.85 | ~0.75 | ~0.65 |

@@ -7,7 +7,13 @@ import os
 import pytest
 
 from env.env import CorporateExpenseEnvironment  # noqa: E402
-from env.grader import episode_score  # noqa: E402
+from env.grader import (  # noqa: E402
+    episode_score,
+    grade_task_easy,
+    grade_task_hard,
+    grade_task_medium,
+    map_closed_unit_to_open_interval,
+)
 from env.models import CorporateExpenseAction, TrajectoryStep  # noqa: E402
 from env.policy import ground_truth_for_expense  # noqa: E402
 from env.policy import policy_tier  # noqa: E402
@@ -61,6 +67,17 @@ def test_easy_episode_high_score(monkeypatch: pytest.MonkeyPatch) -> None:
         )
     assert obs.episode_score is not None
     assert obs.episode_score >= 0.85
+
+
+def test_hackathon_score_strict_open_interval() -> None:
+    """Phase-2: scores must be strictly inside (0, 1), not 0.0 or 1.0."""
+    for fn in (grade_task_easy, grade_task_medium, grade_task_hard):
+        s = fn()
+        assert 0.0 < s < 1.0
+        assert s != 0.0 and s != 1.0
+    m = map_closed_unit_to_open_interval(0.0)
+    assert m == 0.01
+    assert map_closed_unit_to_open_interval(1.0) == 0.99
 
 
 def test_episode_score_deterministic() -> None:

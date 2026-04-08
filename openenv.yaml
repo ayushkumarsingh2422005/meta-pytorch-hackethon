@@ -1,6 +1,116 @@
+# OpenEnv manifest — corporate expense approval (Meta PyTorch OpenEnv hackathon)
+# Phase-2 validators expect: ≥3 tasks declared, grader hooks, scores strictly in (0, 1).
+
 spec_version: 1
 name: corporate_expense_approval
+version: "1.0.0"
 type: space
 runtime: fastapi
 app: server.app:app
 port: 8000
+
+description: >
+  Multi-step corporate expense approval with deterministic policy checks,
+  receipt rules, duplicate detection, and fraud-style signals. Episode scores
+  are produced by env/grader.py and mapped to the open interval (0.01, 0.99).
+
+author: pookie coders
+
+# Declared tasks (minimum three). IDs match reset(task=...) / CORPORATE_EXPENSE_TASK.
+tasks:
+  - id: easy
+    name: "Routine valid expenses"
+    description: "Small, receipted claims; baseline approval workflow."
+    difficulty: easy
+    max_steps: 8
+    reward_range: [0.01, 0.99]
+    grader:
+      module: env.grader
+      function: grade_task_easy
+
+  - id: medium
+    name: "Receipt policy stress"
+    description: "Missing receipts on material amounts; medium-tier policy."
+    difficulty: medium
+    max_steps: 10
+    reward_range: [0.01, 0.99]
+    grader:
+      module: env.grader
+      function: grade_task_medium
+
+  - id: hard
+    name: "Fraud and anomaly patterns"
+    description: "Duplicates, high-value caps, travel/client edge cases."
+    difficulty: hard
+    max_steps: 16
+    reward_range: [0.01, 0.99]
+    grader:
+      module: env.grader
+      function: grade_task_hard
+
+# Optional aliases (same graders as above; same expense fixtures).
+  - id: fraud_easy
+    name: "Routine valid expenses (alias)"
+    description: "Same as easy; alias for legacy Space configs."
+    difficulty: easy
+    max_steps: 8
+    reward_range: [0.01, 0.99]
+    grader:
+      module: env.grader
+      function: grade_task_fraud_easy
+
+  - id: fraud_medium
+    name: "Receipt policy stress (alias)"
+    description: "Same as medium; alias for legacy Space configs."
+    difficulty: medium
+    max_steps: 10
+    reward_range: [0.01, 0.99]
+    grader:
+      module: env.grader
+      function: grade_task_fraud_medium
+
+  - id: fraud_hard
+    name: "Fraud and anomaly patterns (alias)"
+    description: "Same as hard; alias for legacy Space configs."
+    difficulty: hard
+    max_steps: 16
+    reward_range: [0.01, 0.99]
+    grader:
+      module: env.grader
+      function: grade_task_fraud_hard
+
+# Python entrypoints for automated validation (module:function).
+grader_entrypoints:
+  easy: env.grader:grade_task_easy
+  medium: env.grader:grade_task_medium
+  hard: env.grader:grade_task_hard
+
+reward:
+  min: 0.01
+  max: 0.99
+  description: >
+    Step rewards and episode_score are deterministic. Values are computed in [0,1]
+    then mapped linearly to (0.01, 0.99) so scores are strictly inside (0, 1).
+
+action_space:
+  type: object
+  description: Approve or reject the current expense with a short reason.
+  properties:
+    decision:
+      type: string
+      enum: [approve, reject]
+    reason:
+      type: string
+
+observation_space:
+  type: object
+  properties:
+    pending_expenses:
+      type: array
+    current_expense_index:
+      type: integer
+    task:
+      type: string
+    episode_score:
+      type: number
+      description: Present when done; strictly between 0 and 1.
