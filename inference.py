@@ -30,7 +30,7 @@ from models import CorporateExpenseAction
 
 IMAGE_NAME = os.getenv("IMAGE_NAME")
 API_KEY = os.getenv("HF_TOKEN")  # fix 
-API_BASE_URL = os.getenv("API_BASE_URL")  # fix 
+API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"  # add fallback
 MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
 TASK_NAME = os.getenv("CORPORATE_EXPENSE_TASK", os.getenv("EXPENSE_TASK", "easy"))
 BENCHMARK = os.getenv("CORPORATE_EXPENSE_BENCHMARK", "corporate_expense_approval")
