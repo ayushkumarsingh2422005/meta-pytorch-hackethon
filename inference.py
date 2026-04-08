@@ -29,7 +29,7 @@ from client import CorporateExpenseEnv
 from models import CorporateExpenseAction
 
 IMAGE_NAME = os.getenv("IMAGE_NAME")
-API_KEY = os.getenv("API_KEY")  # fix 
+API_KEY = os.getenv("HF_TOKEN")  # fix 
 API_BASE_URL = os.getenv("API_BASE_URL")  # fix 
 MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
 TASK_NAME = os.getenv("CORPORATE_EXPENSE_TASK", os.getenv("EXPENSE_TASK", "easy"))
