@@ -1,5 +1,7 @@
 # OpenEnv manifest — corporate expense approval (Meta PyTorch OpenEnv hackathon)
-# Phase-2: use STRING grader entrypoints (module:function) — some parsers ignore nested maps.
+#
+# Canonical task IDs: fraud_easy | fraud_medium | fraud_hard (not bare easy/medium/hard).
+# List fields under "- id:" must indent deeper than "-".
 
 spec_version: 1
 name: corporate_expense_approval
@@ -16,59 +18,31 @@ description: >
 
 author: pookie coders
 
-# Top-level map (several validators look for this exact key)
 graders:
-  easy: "graders:grade_task_easy"
-  medium: "graders:grade_task_medium"
-  hard: "graders:grade_task_hard"
   fraud_easy: "graders:grade_task_fraud_easy"
   fraud_medium: "graders:grade_task_fraud_medium"
   fraud_hard: "graders:grade_task_fraud_hard"
 
 tasks:
-  - id: easy
+  - id: fraud_easy
     name: "Routine valid expenses"
     description: "Small, receipted claims; baseline approval workflow."
-    difficulty: easy
-    max_steps: 8
-    reward_range: [0.01, 0.99]
-    grader: "graders:grade_task_easy"
-
-  - id: medium
-    name: "Receipt policy stress"
-    description: "Missing receipts on material amounts; medium-tier policy."
-    difficulty: medium
-    max_steps: 10
-    reward_range: [0.01, 0.99]
-    grader: "graders:grade_task_medium"
-
-  - id: hard
-    name: "Fraud and anomaly patterns"
-    description: "Duplicates, high-value caps, travel/client edge cases."
-    difficulty: hard
-    max_steps: 16
-    reward_range: [0.01, 0.99]
-    grader: "graders:grade_task_hard"
-
-  - id: fraud_easy
-    name: "Routine valid expenses (alias)"
-    description: "Same as easy; alias for legacy Space configs."
     difficulty: easy
     max_steps: 8
     reward_range: [0.01, 0.99]
     grader: "graders:grade_task_fraud_easy"
 
   - id: fraud_medium
-    name: "Receipt policy stress (alias)"
-    description: "Same as medium; alias for legacy Space configs."
+    name: "Receipt policy stress"
+    description: "Missing receipts on material amounts; medium-tier policy."
     difficulty: medium
     max_steps: 10
     reward_range: [0.01, 0.99]
     grader: "graders:grade_task_fraud_medium"
 
   - id: fraud_hard
-    name: "Fraud and anomaly patterns (alias)"
-    description: "Same as hard; alias for legacy Space configs."
+    name: "Fraud and anomaly patterns"
+    description: "Duplicates, high-value caps, travel/client edge cases."
     difficulty: hard
     max_steps: 16
     reward_range: [0.01, 0.99]

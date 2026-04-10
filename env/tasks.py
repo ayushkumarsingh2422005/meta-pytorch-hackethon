@@ -1,4 +1,8 @@
-"""Deterministic task definitions: easy, medium, hard."""
+"""Deterministic task definitions.
+
+Canonical task IDs for reset / env vars: fraud_easy, fraud_medium, fraud_hard.
+Short names easy, medium, hard are aliases mapping to the same expense fixtures.
+"""
 
 from __future__ import annotations
 

@@ -9,9 +9,9 @@ import pytest
 from env.env import CorporateExpenseEnvironment  # noqa: E402
 from env.grader import (  # noqa: E402
     episode_score,
-    grade_task_easy,
-    grade_task_hard,
-    grade_task_medium,
+    grade_task_fraud_easy,
+    grade_task_fraud_hard,
+    grade_task_fraud_medium,
     map_closed_unit_to_open_interval,
 )
 from env.models import CorporateExpenseAction, TrajectoryStep  # noqa: E402
@@ -23,6 +23,13 @@ from env.tasks import HARD_EXPENSES, MEDIUM_EXPENSES, get_task_expenses  # noqa:
 def test_fraud_task_aliases_match_short_names() -> None:
     assert get_task_expenses("fraud_easy") == get_task_expenses("easy")
     assert get_task_expenses("fraud_hard") == get_task_expenses("hard")
+
+
+def test_reset_accepts_short_alias_easy() -> None:
+    env = CorporateExpenseEnvironment()
+    obs = env.reset(task="easy")
+    assert obs.task == "easy"
+    assert len(obs.pending_expenses) == len(get_task_expenses("fraud_easy"))
 
 
 def test_policy_tier_normalizes_fraud_prefix() -> None:
@@ -51,9 +58,9 @@ def test_medium_missing_receipt() -> None:
 
 
 def test_easy_episode_high_score(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("CORPORATE_EXPENSE_TASK", "easy")
+    monkeypatch.setenv("CORPORATE_EXPENSE_TASK", "fraud_easy")
     env = CorporateExpenseEnvironment()
-    obs = env.reset(task="easy")
+    obs = env.reset(task="fraud_easy")
     while not obs.done:
         idx = obs.current_expense_index
         cur = obs.pending_expenses[idx]
@@ -67,6 +74,23 @@ def test_easy_episode_high_score(monkeypatch: pytest.MonkeyPatch) -> None:
         )
     assert obs.episode_score is not None
     assert obs.episode_score >= 0.85
+
+
+def test_openenv_yaml_parses_tasks_with_grader_field() -> None:
+    from pathlib import Path
+
+    import yaml
+
+    root = Path(__file__).resolve().parents[1]
+    raw = yaml.safe_load((root / "openenv.yaml").read_text(encoding="utf-8"))
+    tasks = raw.get("tasks") or []
+    assert len(tasks) >= 3
+    with_grader = [t for t in tasks if isinstance(t, dict) and t.get("grader")]
+    assert len(with_grader) >= 3
+    ids = [t.get("id") for t in with_grader]
+    assert "fraud_easy" in ids and "fraud_medium" in ids and "fraud_hard" in ids
+    for t in with_grader:
+        assert ":" in str(t["grader"])
 
 
 def test_root_graders_module_registry() -> None:
@@ -95,7 +119,7 @@ def test_tasks_http_endpoint_lists_graders() -> None:
 
 def test_hackathon_score_strict_open_interval() -> None:
     """Phase-2: scores must be strictly inside (0, 1), not 0.0 or 1.0."""
-    for fn in (grade_task_easy, grade_task_medium, grade_task_hard):
+    for fn in (grade_task_fraud_easy, grade_task_fraud_medium, grade_task_fraud_hard):
         s = fn()
         assert 0.0 < s < 1.0
         assert s != 0.0 and s != 1.0
@@ -121,15 +145,15 @@ def test_episode_score_deterministic() -> None:
 
 
 def test_reset_task_kw_overrides_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("CORPORATE_EXPENSE_TASK", "easy")
+    monkeypatch.setenv("CORPORATE_EXPENSE_TASK", "fraud_easy")
     env = CorporateExpenseEnvironment()
-    obs = env.reset(task="hard")
-    assert obs.task == "hard"
+    obs = env.reset(task="fraud_hard")
+    assert obs.task == "fraud_hard"
     assert len(obs.pending_expenses) == len(HARD_EXPENSES)
 
 
 def test_step_advances_and_done() -> None:
-    os.environ["CORPORATE_EXPENSE_TASK"] = "easy"
+    os.environ["CORPORATE_EXPENSE_TASK"] = "fraud_easy"
     env = CorporateExpenseEnvironment()
     env.reset()
     n = len(env._expenses)

@@ -6,7 +6,7 @@ Environment variables (see README):
     MODEL_NAME     Model id for chat completions.
     HF_TOKEN       API key (falls back to API_KEY).
     IMAGE_NAME     Docker image for CorporateExpenseEnv.from_docker_image().
-    CORPORATE_EXPENSE_TASK   Task id: easy | medium | hard (optional).
+    CORPORATE_EXPENSE_TASK   Task id: fraud_easy | fraud_medium | fraud_hard (optional; aliases easy|medium|hard).
 
 STDOUT FORMAT (do not change):
     [START] task=<task> env=<env> model=<model>
@@ -32,7 +32,7 @@ IMAGE_NAME = os.getenv("IMAGE_NAME")
 API_KEY = os.getenv("HF_TOKEN")  # fix 
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"  # add fallback
 MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
-TASK_NAME = os.getenv("CORPORATE_EXPENSE_TASK", os.getenv("EXPENSE_TASK", "easy"))
+TASK_NAME = os.getenv("CORPORATE_EXPENSE_TASK", os.getenv("EXPENSE_TASK", "fraud_easy"))
 BENCHMARK = os.getenv("CORPORATE_EXPENSE_BENCHMARK", "corporate_expense_approval")
 MAX_STEPS = 64
 TEMPERATURE = 0.3

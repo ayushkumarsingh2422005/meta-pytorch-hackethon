@@ -75,7 +75,7 @@ class CorporateExpenseObservation(Observation):
         ge=0,
         description="Index into pending_expenses for the expense to decide next",
     )
-    task: str = Field(default="easy", description="Task difficulty key")
+    task: str = Field(default="fraud_easy", description="Task id (canonical: fraud_easy|fraud_medium|fraud_hard)")
     episode_score: Optional[float] = Field(
         default=None,
         description="Deterministic episode score when done; strictly in (0,1), typically [0.01,0.99]",
@@ -93,7 +93,7 @@ class CorporateExpenseObservation(Observation):
 class CorporateExpenseState(State):
     """Server-side session state exposed via /state."""
 
-    task: str = Field(default="easy", description="Active task id")
+    task: str = Field(default="fraud_easy", description="Active task id (canonical fraud_*)")
     total_expenses: int = Field(default=0, ge=0)
     processed_count: int = Field(default=0, ge=0)
     episode_complete: bool = Field(default=False)

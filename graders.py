@@ -44,8 +44,8 @@ GRADER_ENTRYPOINTS: dict[str, str] = {
     "fraud_hard": "graders:grade_task_fraud_hard",
 }
 
-# Minimum three primary tasks required by competition rubric
-PRIMARY_GRADER_TASK_IDS = ("easy", "medium", "hard")
+# Canonical public task IDs (competition / openenv.yaml)
+PRIMARY_GRADER_TASK_IDS = ("fraud_easy", "fraud_medium", "fraud_hard")
 
 __all__ = [
     "episode_score",

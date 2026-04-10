@@ -33,7 +33,7 @@ class CorporateExpenseEnvironment(
         super().__init__(transform=None, rubric=None)
         self._episode_id: Optional[str] = None
         self._step_count = 0
-        self._task = "easy"
+        self._task = "fraud_easy"
         self._expenses: list[ExpenseRecord] = []
         self._cursor = 0
         self._trajectory: list[TrajectoryStep] = []
@@ -54,13 +54,12 @@ class CorporateExpenseEnvironment(
         if isinstance(task_kw, str) and task_kw.strip():
             self._task = task_kw.strip().lower()
         else:
-            self._task = os.environ.get("CORPORATE_EXPENSE_TASK", "easy").strip().lower()
+            self._task = os.environ.get("CORPORATE_EXPENSE_TASK", "fraud_easy").strip().lower()
 
         try:
             self._expenses = get_task_expenses(self._task)
         except ValueError:
-            # Prefer short default, then fraud_* default (must exist in TASK_EXPENSES)
-            for fallback in ("easy", "fraud_easy", "medium", "fraud_medium"):
+            for fallback in ("fraud_easy", "fraud_medium", "fraud_hard", "easy", "medium"):
                 if fallback in TASK_EXPENSES:
                     self._task = fallback
                     self._expenses = get_task_expenses(fallback)

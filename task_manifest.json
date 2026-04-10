@@ -1,0 +1,32 @@
+{
+  "spec_version": 1,
+  "environment": "corporate_expense_approval",
+  "description": "Canonical task IDs are fraud_easy, fraud_medium, fraud_hard. Short names easy|medium|hard remain valid in reset() only as aliases.",
+  "tasks_with_graders": [
+    {
+      "id": "fraud_easy",
+      "grader": "graders:grade_task_fraud_easy",
+      "has_grader": true
+    },
+    {
+      "id": "fraud_medium",
+      "grader": "graders:grade_task_fraud_medium",
+      "has_grader": true
+    },
+    {
+      "id": "fraud_hard",
+      "grader": "graders:grade_task_fraud_hard",
+      "has_grader": true
+    }
+  ],
+  "grader_entrypoints": {
+    "fraud_easy": "graders:grade_task_fraud_easy",
+    "fraud_medium": "graders:grade_task_fraud_medium",
+    "fraud_hard": "graders:grade_task_fraud_hard"
+  },
+  "task_id_aliases": {
+    "easy": "fraud_easy",
+    "medium": "fraud_medium",
+    "hard": "fraud_hard"
+  }
+}

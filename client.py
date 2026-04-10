@@ -37,7 +37,7 @@ class CorporateExpenseEnv(
         observation = CorporateExpenseObservation(
             pending_expenses=expenses,
             current_expense_index=int(obs_data.get("current_expense_index", 0)),
-            task=str(obs_data.get("task", "easy")),
+            task=str(obs_data.get("task", "fraud_easy")),
             episode_score=obs_data.get("episode_score"),
             last_action_error=obs_data.get("last_action_error"),
             step_reward_detail=step_reward_detail,

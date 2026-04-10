@@ -56,7 +56,7 @@ The server implements the full **OpenEnv HTTP protocol** (FastAPI + uvicorn), so
                          ▼
 ┌──────────────────────────────────────────────────────┐
 │               server/app.py  (FastAPI)               │
-│  POST /reset   POST /step   GET /state   GET /health   GET /tasks │
+│  POST /reset   POST /step   GET /state   GET /health   GET /tasks   GET /task-manifest │
 └────────────────────────┬─────────────────────────────┘
                          │
               ┌──────────▼──────────┐
@@ -79,7 +79,7 @@ The server implements the full **OpenEnv HTTP protocol** (FastAPI + uvicorn), so
 │   ├── models.py       # Pydantic models: Action, Observation, State, ExpenseRecord
 │   ├── policy.py       # Deterministic ground-truth policy (what the correct answer is)
 │   ├── grader.py       # Step reward computation + episode_score aggregation
-│   └── tasks.py        # Fixed expense lists for easy / medium / hard
+│   └── tasks.py        # Fixtures for fraud_easy / fraud_medium / fraud_hard (+ easy aliases)
 ├── server/
 │   └── app.py          # FastAPI app: /reset, /step, /state, /health endpoints
 ├── scripts/
@@ -89,7 +89,8 @@ The server implements the full **OpenEnv HTTP protocol** (FastAPI + uvicorn), so
 ├── models.py           # Root re-export of env.models (used by OpenEnv tooling)
 ├── client.py           # Async WebSocket client (CorporateExpenseEnv)
 ├── inference.py        # LLM agent entry point
-├── openenv.yaml        # Manifest: top-level ``graders:`` + ≥3 tasks with string entrypoints
+├── openenv.yaml        # Manifest: **valid YAML** — list fields under ``- id`` must indent past ``-``
+├── task_manifest.json  # Same task/grader list in JSON (backup for strict parsers)
 ├── graders.py          # Root grader module (``graders:grade_task_*`` for validators)
 ├── Dockerfile          # Container for local runs & HF Spaces
 ├── pyproject.toml      # Build system + dependencies
@@ -168,7 +169,7 @@ export IMAGE_NAME="corporate-expense-openenv:latest"
 export HF_TOKEN="hf_..."                          # Your Hugging Face token
 export API_BASE_URL="https://router.huggingface.co/v1"
 export MODEL_NAME="Qwen/Qwen2.5-72B-Instruct"
-export CORPORATE_EXPENSE_TASK="medium"            # easy | medium | hard
+export CORPORATE_EXPENSE_TASK="fraud_medium"      # fraud_* (or easy|medium|hard aliases)
 
 python inference.py
 ```
@@ -176,7 +177,7 @@ python inference.py
 **Sample output:**
 
 ```
-[START] task=medium env=corporate_expense_approval model=Qwen/Qwen2.5-72B-Instruct
+[START] task=fraud_medium env=corporate_expense_approval model=Qwen/Qwen2.5-72B-Instruct
 [STEP] step=1 action=expense_action({"decision": "approve", "reason": "..."}) reward=0.90 done=false error=null
 [STEP] step=2 action=expense_action({"decision": "reject", "reason": "Missing receipt..."}) reward=0.80 done=false error=null
 [STEP] step=3 action=expense_action({"decision": "reject", "reason": "..."}) reward=0.70 done=false error=null
@@ -190,15 +191,17 @@ python inference.py
 
 ### Tasks
 
-| Task | Expenses | Focus |
-|------|----------|-------|
-| `easy` | 3 claims | Small amounts, all receipted — basic approve path |
-| `medium` | 4 claims | Missing receipts at moderate amounts; stricter policy |
-| `hard` | 5 claims | Duplicate lines, very high amounts, travel/entertainment edge cases |
+**Canonical task IDs** (used in `openenv.yaml`, `task_manifest.json`, and defaults):
 
-Select via `reset(task="hard")` or the `CORPORATE_EXPENSE_TASK` env var.
+| Task id | Expenses | Focus |
+|---------|----------|-------|
+| `fraud_easy` | 3 claims | Small amounts, all receipted — basic approve path |
+| `fraud_medium` | 4 claims | Missing receipts at moderate amounts; stricter policy |
+| `fraud_hard` | 5 claims | Duplicate lines, very high amounts, travel/entertainment edge cases |
 
-**Aliases:** `fraud_easy`, `fraud_medium`, and `fraud_hard` use the same expense batches as `easy`, `medium`, and `hard` (for Hugging Face / legacy configs). The validator’s `POST /reset` with `{}` uses the default task (`easy` unless you set `CORPORATE_EXPENSE_TASK` on the Space).
+Select via `reset(task="fraud_hard")` or `CORPORATE_EXPENSE_TASK`.
+
+**Aliases:** `easy`, `medium`, and `hard` still work in `reset(task=...)` and resolve to the same fixtures as `fraud_*`. Default episode task is **`fraud_easy`**. `POST /reset` with `{}` uses that default unless the Space sets `CORPORATE_EXPENSE_TASK`.
 
 ---
 
@@ -225,7 +228,7 @@ Select via `reset(task="hard")` or the `CORPORATE_EXPENSE_TASK` env var.
 {
   "pending_expenses": [...],
   "current_expense_index": 1,
-  "task": "medium",
+  "task": "fraud_medium",
   "done": false,
   "reward": 0.70,
   "episode_score": null,
@@ -282,7 +285,7 @@ Select via `reset(task="hard")` or the `CORPORATE_EXPENSE_TASK` env var.
 | `HF_TOKEN` | *(required)* | Hugging Face API key (also accepted as `API_KEY`) |
 | `API_BASE_URL` | `https://router.huggingface.co/v1` | OpenAI-compatible API base |
 | `MODEL_NAME` | `Qwen/Qwen2.5-72B-Instruct` | Model ID for chat completions |
-| `CORPORATE_EXPENSE_TASK` | `easy` | Task difficulty: `easy` / `medium` / `hard` |
+| `CORPORATE_EXPENSE_TASK` | `fraud_easy` | Task id: `fraud_easy` / `fraud_medium` / `fraud_hard` (or aliases `easy` / `medium` / `hard`) |
 
 ### How It Works
 
@@ -319,7 +322,7 @@ The FastAPI server exposes the standard OpenEnv HTTP protocol:
 | Endpoint | Method | Body | Description |
 |----------|--------|------|-------------|
 | `/health` | `GET` | — | Liveness check → `{"status": "ok"}` |
-| `/reset` | `POST` | `{"task": "easy"}` | Start a new episode |
+| `/reset` | `POST` | `{"task": "fraud_easy"}` | Start a new episode |
 | `/step` | `POST` | `{"decision": "...", "reason": "..."}` | Submit an action |
 | `/state` | `GET` | — | Get current episode state |
 
@@ -329,7 +332,7 @@ The FastAPI server exposes the standard OpenEnv HTTP protocol:
 # 1. Start an episode
 curl -s -X POST http://localhost:8000/reset \
   -H "Content-Type: application/json" \
-  -d '{"task": "hard"}' | python -m json.tool
+  -d '{"task": "fraud_hard"}' | python -m json.tool
 
 # 2. Submit a decision
 curl -s -X POST http://localhost:8000/step \
@@ -354,7 +357,7 @@ async def run():
     # Or spin up a fresh Docker container automatically
     env = await CorporateExpenseEnv.from_docker_image("corporate-expense-openenv:latest")
 
-    result = await env.reset(task="medium")
+    result = await env.reset(task="fraud_medium")
     obs = result.observation
 
     while not result.done:
@@ -389,9 +392,9 @@ pytest tests/test_env.py::test_easy_episode_high_score -v
 |------|---------------|
 | `test_ground_truth_duplicate_hard` | Duplicate expense H2 is correctly flagged as `reject` |
 | `test_medium_missing_receipt` | M3 (no receipt, moderate amount) → `reject` |
-| `test_easy_episode_high_score` | Oracle policy on `easy` achieves ≥ 0.85 episode score |
+| `test_easy_episode_high_score` | Oracle policy on `fraud_easy` achieves ≥ 0.85 episode score |
 | `test_episode_score_deterministic` | Same trajectory always yields the same score |
-| `test_reset_task_kw_overrides_env` | `reset(task="hard")` overrides the env var |
+| `test_reset_task_kw_overrides_env` | `reset(task="fraud_hard")` overrides the env var |
 | `test_step_advances_and_done` | Cursor advances correctly; `done` triggers at last step |
 
 ---
@@ -484,7 +487,7 @@ export IMAGE_NAME="corporate-expense-openenv:latest"   # still needed for docker
 export HF_TOKEN="hf_..."
 export API_BASE_URL="https://router.huggingface.co/v1"
 export MODEL_NAME="Qwen/Qwen2.5-72B-Instruct"
-export CORPORATE_EXPENSE_TASK="hard"
+export CORPORATE_EXPENSE_TASK="fraud_hard"
 
 python inference.py
 ```
