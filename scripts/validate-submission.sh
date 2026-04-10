@@ -2,11 +2,14 @@
 #
 # validate-submission.sh — OpenEnv Submission Validator
 #
-# Checks that your HF Space is live, Docker image builds, and openenv validate passes.
+# Checks that your HF Space is live, Docker image builds, openenv validate passes,
+# and (Step 4) openenv.yaml lists ≥3 tasks with graders and those graders run with
+# scores in [0, 1] — aligns with hackathon "3+ tasks with graders" pre-checks.
 #
 # Prerequisites:
 #   - Docker:       https://docs.docker.com/get-docker/
 #   - openenv-core: pip install openenv-core
+#   - Python 3 + dev deps: pip install -e ".[dev]"  (PyYAML + tests; from repo root)
 #   - curl (usually pre-installed)
 #
 # Run:
@@ -103,7 +106,7 @@ log "Repo:     $REPO_DIR"
 log "Ping URL: $PING_URL"
 printf "\n"
 
-log "${BOLD}Step 1/3: Pinging HF Space${NC} ($PING_URL/reset) ..."
+log "${BOLD}Step 1/4: Pinging HF Space${NC} ($PING_URL/reset) ..."
 
 CURL_OUTPUT=$(portable_mktemp "validate-curl")
 CLEANUP_FILES+=("$CURL_OUTPUT")
@@ -125,7 +128,7 @@ else
   stop_at "Step 1"
 fi
 
-log "${BOLD}Step 2/3: Running docker build${NC} ..."
+log "${BOLD}Step 2/4: Running docker build${NC} ..."
 
 if ! command -v docker &>/dev/null; then
   fail "docker command not found"
@@ -155,7 +158,7 @@ else
   stop_at "Step 2"
 fi
 
-log "${BOLD}Step 3/3: Running openenv validate${NC} ..."
+log "${BOLD}Step 3/4: Running openenv validate${NC} ..."
 
 if ! command -v openenv &>/dev/null; then
   fail "openenv command not found"
@@ -175,9 +178,42 @@ else
   stop_at "Step 3"
 fi
 
+log "${BOLD}Step 4/4: Tasks + graders (openenv.yaml + run grader functions)${NC} ..."
+
+PY=""
+if command -v python3 &>/dev/null; then
+  PY="python3"
+elif command -v python &>/dev/null; then
+  PY="python"
+fi
+
+if [ -z "$PY" ]; then
+  fail "python3/python not found (needed for Step 4)"
+  hint "Install Python 3 and: cd $REPO_DIR && pip install -e \".[dev]\""
+  stop_at "Step 4"
+fi
+
+if [ ! -f "$REPO_DIR/scripts/pre_submit_check.py" ]; then
+  fail "Missing scripts/pre_submit_check.py"
+  stop_at "Step 4"
+fi
+
+STEP4_OUT=$(portable_mktemp "validate-step4")
+CLEANUP_FILES+=("$STEP4_OUT")
+if ( cd "$REPO_DIR" && "$PY" scripts/pre_submit_check.py --space-url "$PING_URL" ) >"$STEP4_OUT" 2>&1; then
+  pass "Tasks with graders + grader scores OK (see log below)"
+  while IFS= read -r line; do log "  $line"; done <"$STEP4_OUT"
+else
+  fail "pre_submit_check.py failed (tasks/graders or remote /tasks)"
+  printf "%s\n" "$(cat "$STEP4_OUT")"
+  hint "Run manually: cd $REPO_DIR && $PY scripts/pre_submit_check.py --space-url $PING_URL"
+  hint "Install deps: cd $REPO_DIR && pip install -e \".[dev]\""
+  stop_at "Step 4"
+fi
+
 printf "\n"
 printf "${BOLD}========================================${NC}\n"
-printf "${GREEN}${BOLD}  All 3/3 checks passed!${NC}\n"
+printf "${GREEN}${BOLD}  All 4/4 checks passed!${NC}\n"
 printf "${GREEN}${BOLD}  Your submission is ready to submit.${NC}\n"
 printf "${BOLD}========================================${NC}\n"
 printf "\n"

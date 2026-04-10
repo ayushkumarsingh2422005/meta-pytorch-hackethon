@@ -549,11 +549,12 @@ openenv validate --verbose
 docker build -t corporate-expense-openenv:test .
 ```
 
-### Official 3-step script (bash: Space + Docker + openenv)
+### Official script (bash: Space + Docker + openenv + tasks/graders)
 
-Use the included shell script to run all 3 pre-submission checks:
+Use the included shell script to run **four** pre-submission checks (matches the hackathon checklist including **3+ tasks with graders**):
 
 ```bash
+pip install -e ".[dev]"   # pytest + PyYAML for scripts/pre_submit_check.py
 chmod +x scripts/validate-submission.sh
 
 ./scripts/validate-submission.sh \
@@ -565,11 +566,12 @@ chmod +x scripts/validate-submission.sh
 
 | Step | Check |
 |------|-------|
-| 1/3 | HF Space is live and `/reset` returns HTTP 200 |
-| 2/3 | `docker build` completes successfully |
-| 3/3 | `openenv validate --verbose` passes |
+| 1/4 | HF Space is live and `POST /reset` returns HTTP 200 |
+| 2/4 | `docker build` completes successfully |
+| 3/4 | `openenv validate` passes |
+| 4/4 | `openenv.yaml` has ≥3 tasks with grader strings; `python scripts/pre_submit_check.py --space-url …` runs graders and checks scores ∈ [0, 1]; hits `/tasks` on the Space |
 
-All three must pass before submitting to the hackathon.
+All four must pass before submitting to the hackathon.
 
 ---
 
