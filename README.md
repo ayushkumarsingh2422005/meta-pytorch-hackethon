@@ -527,6 +527,30 @@ port: 8000
 
 ## ✅ Validating Your Submission
 
+### Local: tasks + graders (before Docker / HF)
+
+From the repo root (after `pip install -e .`):
+
+```bash
+python scripts/pre_submit_check.py
+python scripts/pre_submit_check.py --space-url https://YOUR-SPACE.hf.space
+```
+
+This verifies `openenv.yaml` has ≥3 tasks with `grader: "module:function"` strings, runs `graders.GRADERS[fraud_*]()` and checks scores ∈ [0, 1]. With `--space-url`, it also hits `/health`, `POST /reset`, and `/tasks`.
+
+**Windows (PowerShell), same checks:**
+
+```powershell
+cd "C:\path\to\meta-pytorch-hackathon"
+pip install -e .
+python scripts\pre_submit_check.py
+python scripts\pre_submit_check.py --space-url "https://YOUR-SPACE.hf.space"
+openenv validate --verbose
+docker build -t corporate-expense-openenv:test .
+```
+
+### Official 3-step script (bash: Space + Docker + openenv)
+
 Use the included shell script to run all 3 pre-submission checks:
 
 ```bash
