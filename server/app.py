@@ -50,7 +50,7 @@ def list_tasks_with_graders() -> dict:
     return {
         "tasks": _TASKS_WITH_GRADERS,
         "count": len(_TASKS_WITH_GRADERS),
-        "tasks_with_graders": sum(1 for t in _TASKS_WITH_GRADERS if t.get("has_grader")),
+        "tasks_with_graders": [t for t in _TASKS_WITH_GRADERS if t.get("has_grader")],
     }
 
 

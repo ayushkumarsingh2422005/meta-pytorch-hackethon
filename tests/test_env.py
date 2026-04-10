@@ -113,7 +113,10 @@ def test_tasks_http_endpoint_lists_graders() -> None:
     assert r.status_code == 200
     data = r.json()
     assert data["count"] >= 3
-    assert data["tasks_with_graders"] >= 3
+    twg = data["tasks_with_graders"]
+    assert isinstance(twg, list)
+    assert len(twg) >= 3
+    assert all(t.get("has_grader") for t in twg)
     assert all(t.get("has_grader") for t in data["tasks"][:3])
 
 

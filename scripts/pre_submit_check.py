@@ -131,8 +131,12 @@ def check_space_url(url: str) -> None:
         if path == "/tasks" and payload:
             try:
                 j = json.loads(payload)
-                n = j.get("tasks_with_graders", j.get("count", 0))
-                print(f"       /tasks tasks_with_graders={n!r}")
+                twg = j.get("tasks_with_graders")
+                if isinstance(twg, list):
+                    n = len(twg)
+                else:
+                    n = twg if isinstance(twg, int) else j.get("count", 0)
+                print(f"       /tasks tasks_with_graders (len)={n!r}")
             except json.JSONDecodeError:
                 pass
 
